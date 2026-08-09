@@ -72,6 +72,7 @@ enum OSDMessage {
   case seek(String, String, Double)  // current, total, percentage
   case volume(Double)
   case speed(Double)
+  case speedRestored(Double)
   case aspect(String)
   case crop(String)
   case rotate(Int)
@@ -137,7 +138,7 @@ enum OSDMessage {
     case .pause: return Preference.bool(for: .disableOSDPauseResumeMsgs)
     case .resume: return Preference.bool(for: .disableOSDPauseResumeMsgs)
     case .seek: return Preference.bool(for: .disableOSDSeekMsg)
-    case .speed: return Preference.bool(for: .disableOSDSpeedMsg)
+    case .speed, .speedRestored: return Preference.bool(for: .disableOSDSpeedMsg)
     default: return false
     }
   }
@@ -191,6 +192,16 @@ enum OSDMessage {
         String(format: NSLocalizedString("osd.speed", comment: "Speed: %@x"), value.groupedStringUpTo6Decimals),
         .normal
       )
+
+    case .speedRestored(let value):
+      let format = NSLocalizedString(
+        "osd.speed_restored",
+        tableName: nil,
+        bundle: .main,
+        value: "Restored speed: %@x",
+        comment: "Restored speed: %@x"
+      )
+      return (String(format: format, value.groupedStringUpTo6Decimals), .normal)
 
     case .aspect(var value):
       if value == "Default" {

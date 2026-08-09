@@ -2357,7 +2357,9 @@ class PlayerCore: NSObject {
   func pauseChanged(_ paused: Bool) {
     guard mainWindow.loaded, info.state.loaded else { return }
     if (info.state == .paused) != paused {
-      sendOSD(paused ? .pause : .resume)
+      if !mainWindow.consumeForceTouchResumeOSDSuppression(paused: paused) {
+        sendOSD(paused ? .pause : .resume)
+      }
       // The NowPlayingInfoManager is notified when playback is paused or resumed. The video
       // position must be updated before notifying the manager.
       syncUITime()
@@ -2474,7 +2476,9 @@ class PlayerCore: NSObject {
   func speedChanged(_ speed: Double) {
     guard info.state.active else { return }
     info.playSpeed = speed
-    sendOSD(.speed(speed))
+    if !mainWindow.handleForceTouchSpeedOSD(speed) {
+      sendOSD(.speed(speed))
+    }
     mainWindow.updateSpeedLabel(speed: speed)
     postNotification(.iinaSpeedChanged)
     NowPlayingInfoManager.shared.updateInfo()

@@ -298,6 +298,6 @@ fileprivate class BrowserExtensionView: SettingsAccessory.Base {
   }
 
   @objc func extSafariBtnAction() {
-    SFSafariApplication.showPreferencesForExtension(withIdentifier: "com.colliderli.iina.OpenInIINA")
+    SFSafariApplication.showPreferencesForExtension(withIdentifier: "com.colliderli.myiina.OpenInIINA")
   }
 }

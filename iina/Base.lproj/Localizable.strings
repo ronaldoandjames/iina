@@ -92,6 +92,7 @@
 "osd.resume" = "Resume";
 "osd.volume" = "Volume: %@";
 "osd.speed" = "Speed: %@x";
+"osd.speed_restored" = "Restored speed: %@x";
 "osd.aspect" = "Aspect Ratio: %@";
 "osd.crop" = "Crop: %@";
 "osd.rotate" = "Rotate: %i°";

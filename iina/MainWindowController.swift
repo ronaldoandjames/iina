@@ -155,6 +155,14 @@ class MainWindowController: PlayerWindowController {
   /** For force touch action */
   var isCurrentPressInSecondStage = false
 
+  /** Playback state used while Force Touch temporarily changes the speed over the video view. */
+  private var speedBeforeForceTouch: Double?
+  private var forceTouchPlaybackSpeed: Double?
+  private var forceTouchDidChangePlaybackSpeed = false
+  private var pendingForceTouchSpeedRestoration: Double?
+  private var shouldConsumeForceTouchMouseUp = false
+  private var shouldSuppressForceTouchResumeOSD = false
+
   /** Whether current osd needs user interaction to be dismissed */
   var isShowingPersistentOSD = false
   var osdContext: Any?
@@ -971,12 +979,107 @@ class MainWindowController: PlayerWindowController {
   }
 
   override func pressureChange(with event: NSEvent) {
+    if event.stage == 0 {
+      endForceTouchSpeedPlayback()
+      isCurrentPressInSecondStage = false
+      return
+    }
+
+    if speedBeforeForceTouch != nil {
+      if event.stage == 1 {
+        setForceTouchPlaybackSpeed(2)
+      } else if event.stage == 2 {
+        setForceTouchPlaybackSpeed(3)
+      }
+      return
+    }
+
+    let isOverVideo = event.inAnyOf([videoView]) && !event.inAnyOf(mouseActionDisabledViews)
+    if isOverVideo && (event.stage == 1 || event.stage == 2) {
+      guard isVideoLoaded,
+            !interactiveMode.isActive,
+            player.info.state == .playing || player.info.state == .paused else { return }
+      setForceTouchPlaybackSpeed(event.stage == 1 ? 2 : 3)
+      return
+    }
+
     if isCurrentPressInSecondStage == false && event.stage == 2 {
       performMouseAction(Preference.enum(for: .forceTouchAction))
       isCurrentPressInSecondStage = true
     } else if event.stage == 1 {
       isCurrentPressInSecondStage = false
     }
+  }
+
+  private func setForceTouchPlaybackSpeed(_ speed: Double) {
+    let isStarting = speedBeforeForceTouch == nil
+    let shouldResumePlayback = isStarting && player.info.state == .paused
+    if isStarting {
+      speedBeforeForceTouch = player.info.playSpeed
+      forceTouchDidChangePlaybackSpeed = false
+      pendingForceTouchSpeedRestoration = nil
+      shouldConsumeForceTouchMouseUp = true
+    }
+
+    if shouldResumePlayback {
+      shouldSuppressForceTouchResumeOSD = true
+      player.resume()
+    }
+
+    guard forceTouchPlaybackSpeed != speed else { return }
+    forceTouchPlaybackSpeed = speed
+
+    if isStarting, let originalSpeed = speedBeforeForceTouch, speedsMatch(originalSpeed, speed) {
+      player.sendOSD(.speed(speed), autoHide: false)
+    } else {
+      forceTouchDidChangePlaybackSpeed = true
+      player.setSpeed(speed)
+    }
+  }
+
+  private func endForceTouchSpeedPlayback() {
+    guard let originalSpeed = speedBeforeForceTouch else { return }
+    let temporarySpeed = forceTouchPlaybackSpeed
+    let didChangePlaybackSpeed = forceTouchDidChangePlaybackSpeed
+
+    speedBeforeForceTouch = nil
+    forceTouchPlaybackSpeed = nil
+    forceTouchDidChangePlaybackSpeed = false
+
+    if didChangePlaybackSpeed,
+       let temporarySpeed,
+       !speedsMatch(temporarySpeed, originalSpeed) {
+      pendingForceTouchSpeedRestoration = originalSpeed
+      player.setSpeed(originalSpeed)
+    } else {
+      pendingForceTouchSpeedRestoration = nil
+      player.sendOSD(.speedRestored(originalSpeed), forcedTimeout: 2)
+    }
+  }
+
+  /// Returns whether the automatic speed OSD was replaced by the Force Touch speed OSD.
+  func handleForceTouchSpeedOSD(_ speed: Double) -> Bool {
+    if speedBeforeForceTouch != nil {
+      player.sendOSD(.speed(speed), autoHide: false)
+      return true
+    }
+
+    guard let restoredSpeed = pendingForceTouchSpeedRestoration else { return false }
+    if speedsMatch(speed, restoredSpeed) {
+      pendingForceTouchSpeedRestoration = nil
+      player.sendOSD(.speedRestored(restoredSpeed), forcedTimeout: 2)
+    }
+    return true
+  }
+
+  func consumeForceTouchResumeOSDSuppression(paused: Bool) -> Bool {
+    guard !paused, shouldSuppressForceTouchResumeOSD else { return false }
+    shouldSuppressForceTouchResumeOSD = false
+    return true
+  }
+
+  private func speedsMatch(_ lhs: Double, _ rhs: Double) -> Bool {
+    abs(lhs - rhs) < 0.000001
   }
 
   /// Workaround for issue #4183, Cursor remains visible after resuming playback with the touchpad using secondary click
@@ -1041,6 +1144,13 @@ class MainWindowController: PlayerWindowController {
     }
     workaroundCursorDefect()
     mousePosRelatedToWindow = nil
+    if shouldConsumeForceTouchMouseUp {
+      endForceTouchSpeedPlayback()
+      shouldConsumeForceTouchMouseUp = false
+      isCurrentPressInSecondStage = false
+      isDragging = false
+      return
+    }
     if isDragging {
       // if it's a mouseup after dragging window
       isDragging = false
@@ -1882,6 +1992,12 @@ class MainWindowController: PlayerWindowController {
   }
 
   func windowDidResignKey(_ notification: Notification) {
+    if speedBeforeForceTouch != nil {
+      endForceTouchSpeedPlayback()
+      shouldConsumeForceTouchMouseUp = false
+      isCurrentPressInSecondStage = false
+    }
+
     // keyWindow is nil: The whole app is inactive
     // keyWindow is another MainWindow: Switched to another video window
     if NSApp.keyWindow == nil ||
