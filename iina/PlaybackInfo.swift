@@ -9,7 +9,7 @@
 import Foundation
 
 class PlaybackInfo {
-///123222
+///123222444
   /// Enumeration representing the status of the [mpv](https://mpv.io/manual/stable/) A-B loop command.
   ///
   /// The A-B loop command cycles mpv through these states:
