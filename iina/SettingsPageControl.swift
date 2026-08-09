@@ -43,9 +43,6 @@ class SettingsPageControl: SettingsPage {
         SettingsItem.PopupButton()
           .bindTo(.pinchAction, ofType: Preference.PinchAction.self)
           .image(name: "rectangle.fill")
-        SettingsItem.PopupButton()
-          .bindTo(.forceTouchAction, ofType: Preference.MouseClickAction.self)
-          .availableTags([0, 1, 2, 3])
       }
     }
   }

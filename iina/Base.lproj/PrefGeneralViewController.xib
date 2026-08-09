@@ -103,15 +103,12 @@
                         <binding destination="IBP-Mz-Maa" name="value" keyPath="values.resumeLastPosition" id="305-KH-mQ5"/>
                     </connections>
                 </button>
-                <button translatesAutoresizingMaskIntoConstraints="NO" id="ibu-Tq-kBr">
+                <button enabled="NO" hidden="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ibu-Tq-kBr">
                     <rect key="frame" x="120" y="32" width="134" height="16"/>
                     <buttonCell key="cell" type="check" title="Check for updates" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="hWC-KJ-FuC">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
-                    <connections>
-                        <binding destination="-3" name="value" keyPath="delegate.updaterController.updater.automaticallyChecksForUpdates" id="jlJ-QN-IRH"/>
-                    </connections>
                 </button>
                 <button translatesAutoresizingMaskIntoConstraints="NO" id="6Hg-O4-cBP">
                     <rect key="frame" x="120" y="197" width="156" height="16"/>
@@ -133,17 +130,14 @@
                         <binding destination="IBP-Mz-Maa" name="value" keyPath="values.blackOutMonitor" id="LYr-PX-pOF"/>
                     </connections>
                 </button>
-                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="tUl-6f-ClP">
+                <button enabled="NO" hidden="YES" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="tUl-6f-ClP">
                     <rect key="frame" x="120" y="8" width="153" height="16"/>
                     <buttonCell key="cell" type="check" title="Receive beta updates" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="f0j-Dn-cxt">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
-                    <connections>
-                        <binding destination="IBP-Mz-Maa" name="value" keyPath="values.receiveBetaUpdate" id="hup-g9-DSv"/>
-                    </connections>
                 </button>
-                <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ONF-nX-zDm">
+                <popUpButton enabled="NO" hidden="YES" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ONF-nX-zDm">
                     <rect key="frame" x="262" y="28" width="96" height="24"/>
                     <popUpButtonCell key="cell" type="push" title="Hourly" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="3600" imageScaling="proportionallyDown" inset="2" selectedItem="slG-Jb-54B" id="fRX-zX-ecC">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -165,10 +159,6 @@
                             </items>
                         </menu>
                     </popUpButtonCell>
-                    <connections>
-                        <binding destination="-3" name="enabled" keyPath="delegate.updaterController.updater.automaticallyChecksForUpdates" id="Ly4-Xs-Mka"/>
-                        <binding destination="-3" name="selectedTag" keyPath="delegate.updaterController.updater.updateCheckInterval" id="iLA-V7-aFg"/>
-                    </connections>
                 </popUpButton>
                 <button translatesAutoresizingMaskIntoConstraints="NO" id="b7I-2V-MYa">
                     <rect key="frame" x="120" y="141" width="412" height="16"/>
