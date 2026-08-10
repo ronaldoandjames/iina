@@ -986,20 +986,18 @@ class MainWindowController: PlayerWindowController {
     }
 
     if speedBeforeForceTouch != nil {
-      if event.stage == 1 {
-        setForceTouchPlaybackSpeed(2)
-      } else if event.stage == 2 {
-        setForceTouchPlaybackSpeed(3)
+      if let speed = configuredForceTouchSpeed(for: event.stage) {
+        setForceTouchPlaybackSpeed(speed)
       }
       return
     }
 
     let isOverVideo = event.inAnyOf([videoView]) && !event.inAnyOf(mouseActionDisabledViews)
-    if isOverVideo && (event.stage == 1 || event.stage == 2) {
+    if isOverVideo, let speed = configuredForceTouchSpeed(for: event.stage) {
       guard isVideoLoaded,
             !interactiveMode.isActive,
             player.info.state == .playing || player.info.state == .paused else { return }
-      setForceTouchPlaybackSpeed(event.stage == 1 ? 2 : 3)
+      setForceTouchPlaybackSpeed(speed)
       return
     }
 
@@ -1009,6 +1007,19 @@ class MainWindowController: PlayerWindowController {
     } else if event.stage == 1 {
       isCurrentPressInSecondStage = false
     }
+  }
+
+  private func configuredForceTouchSpeed(for stage: Int) -> Double? {
+    let rawValue: Int
+    switch stage {
+    case 1:
+      rawValue = Preference.integer(for: .forceTouchFirstStageSpeed).clamped(to: 4...10)
+    case 2:
+      rawValue = Preference.integer(for: .forceTouchSecondStageSpeed).clamped(to: 6...12)
+    default:
+      return nil
+    }
+    return Double(rawValue) / 2
   }
 
   private func setForceTouchPlaybackSpeed(_ speed: Double) {

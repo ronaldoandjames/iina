@@ -43,6 +43,12 @@ class SettingsPageControl: SettingsPage {
         SettingsItem.PopupButton()
           .bindTo(.pinchAction, ofType: Preference.PinchAction.self)
           .image(name: "rectangle.fill")
+        SettingsItem.PopupButton()
+          .bindTo(.forceTouchFirstStageSpeed, ofType: Preference.ForceTouchPlaybackSpeed.self)
+          .availableTags([4, 5, 6, 7, 8, 9, 10])
+        SettingsItem.PopupButton()
+          .bindTo(.forceTouchSecondStageSpeed, ofType: Preference.ForceTouchPlaybackSpeed.self)
+          .availableTags([6, 7, 8, 9, 10, 11, 12])
       }
     }
   }

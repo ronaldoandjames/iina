@@ -713,6 +713,8 @@
 "settings.forceTouchAction.items.2" = "Pause/Resume";
 "settings.forceTouchAction.items.3" = "Hide OSC";
 "settings.forceTouchAction.label" = "Force Touch to";
+"settings.forceTouchFirstStageSpeed.label" = "Force Touch stage 1 speed";
+"settings.forceTouchSecondStageSpeed.label" = "Force Touch stage 2 speed";
 "settings.horizontalScrollAction.items.0" = "Adjust volume";
 "settings.horizontalScrollAction.items.1" = "Seek";
 "settings.horizontalScrollAction.items.2" = "None";

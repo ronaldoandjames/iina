@@ -695,6 +695,8 @@
 "settings.forceTouchAction.items.2" = "暫停 / 繼續";
 "settings.forceTouchAction.items.3" = "隱藏播放控制列";
 "settings.forceTouchAction.label" = "用力長按時";
+"settings.forceTouchFirstStageSpeed.label" = "觸控板第 1 級重按";
+"settings.forceTouchSecondStageSpeed.label" = "觸控板第 2 級重按";
 "settings.horizontalScrollAction.items.0" = "調整音量";
 "settings.horizontalScrollAction.items.1" = "尋找";
 "settings.horizontalScrollAction.items.2" = "無";

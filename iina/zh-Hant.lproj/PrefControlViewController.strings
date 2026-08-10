@@ -171,3 +171,9 @@
 
 /* Class = "NSMenuItem"; title = "Enter/Exit picture-in-picture"; ObjectID = "3Pm-nn-HpB"; */
 "3Pm-nn-HpB.title" = "切換子母畫面";
+
+/* Class = "NSTextFieldCell"; title = "Force Touch stage 1 speed:"; ObjectID = "fT1-Lb-001"; */
+"fT1-Lb-001.title" = "觸控板第 1 級重按:";
+
+/* Class = "NSTextFieldCell"; title = "Force Touch stage 2 speed:"; ObjectID = "fT2-Lb-001"; */
+"fT2-Lb-001.title" = "觸控板第 2 級重按:";

@@ -287,6 +287,8 @@ struct Preference {
     static let middleClickAction = Key("middleClickAction")
     static let pinchAction = Key("pinchAction")
     static let forceTouchAction = Key("forceTouchAction")
+    static let forceTouchFirstStageSpeed = Key("forceTouchFirstStageSpeed")
+    static let forceTouchSecondStageSpeed = Key("forceTouchSecondStageSpeed")
 
     static let showRemainingTime = Key("showRemainingTime")
     static let scaleRemainingTime = Key("scaleRemainingTime")
@@ -499,6 +501,28 @@ struct Preference {
       case .abLoop: "abLoop"
       case .resetSpeed: "resetSpeed"
       }
+    }
+  }
+
+  enum ForceTouchPlaybackSpeed: Int, InitializingFromKey, CaseIterable {
+    case x2 = 4
+    case x2_5
+    case x3
+    case x3_5
+    case x4
+    case x4_5
+    case x5
+    case x5_5
+    case x6
+
+    static var defaultValue = ForceTouchPlaybackSpeed.x2
+
+    init?(key: Key) {
+      self.init(rawValue: Preference.integer(for: key))
+    }
+
+    var description: String {
+      rawValue.isMultiple(of: 2) ? "\(rawValue / 2)x" : "\(rawValue / 2).5x"
     }
   }
 
@@ -1205,6 +1229,8 @@ struct Preference {
     .middleClickAction: MouseClickAction.none.rawValue,
     .pinchAction: PinchAction.windowSize.rawValue,
     .forceTouchAction: MouseClickAction.none.rawValue,
+    .forceTouchFirstStageSpeed: ForceTouchPlaybackSpeed.x2.rawValue,
+    .forceTouchSecondStageSpeed: ForceTouchPlaybackSpeed.x3.rawValue,
 
     .screenshotSaveToFile: true,
     .screenshotCopyToClipboard: false,

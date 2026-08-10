@@ -696,6 +696,8 @@
 "settings.forceTouchAction.items.2" = "暂停 / 继续";
 "settings.forceTouchAction.items.3" = "隐藏播放控制";
 "settings.forceTouchAction.label" = "Force Touch 时";
+"settings.forceTouchFirstStageSpeed.label" = "触控板1级重按";
+"settings.forceTouchSecondStageSpeed.label" = "触控板2级重按";
 "settings.horizontalScrollAction.items.0" = "调整音量";
 "settings.horizontalScrollAction.items.1" = "跳转";
 "settings.horizontalScrollAction.items.2" = "无";

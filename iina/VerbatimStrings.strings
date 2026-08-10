@@ -31,3 +31,21 @@
 "settings.transportRTSPThrough.items.1" = "TCP";
 "settings.transportRTSPThrough.items.2" = "UDP";
 "settings.transportRTSPThrough.items.3" = "HTTP";
+
+"settings.forceTouchFirstStageSpeed.label" = "Force Touch stage 1 speed";
+"settings.forceTouchFirstStageSpeed.items.4" = "2x";
+"settings.forceTouchFirstStageSpeed.items.5" = "2.5x";
+"settings.forceTouchFirstStageSpeed.items.6" = "3x";
+"settings.forceTouchFirstStageSpeed.items.7" = "3.5x";
+"settings.forceTouchFirstStageSpeed.items.8" = "4x";
+"settings.forceTouchFirstStageSpeed.items.9" = "4.5x";
+"settings.forceTouchFirstStageSpeed.items.10" = "5x";
+
+"settings.forceTouchSecondStageSpeed.label" = "Force Touch stage 2 speed";
+"settings.forceTouchSecondStageSpeed.items.6" = "3x";
+"settings.forceTouchSecondStageSpeed.items.7" = "3.5x";
+"settings.forceTouchSecondStageSpeed.items.8" = "4x";
+"settings.forceTouchSecondStageSpeed.items.9" = "4.5x";
+"settings.forceTouchSecondStageSpeed.items.10" = "5x";
+"settings.forceTouchSecondStageSpeed.items.11" = "5.5x";
+"settings.forceTouchSecondStageSpeed.items.12" = "6x";

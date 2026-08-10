@@ -414,11 +414,11 @@
             <point key="canvasLocation" x="-334" y="537"/>
         </customView>
         <customView id="VSf-E0-Btw" userLabel="Prefs &gt; Control &gt; Trackpad">
-            <rect key="frame" x="0.0" y="0.0" width="480" height="56"/>
+            <rect key="frame" x="0.0" y="0.0" width="480" height="80"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
                 <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nio-Fb-YPK">
-                    <rect key="frame" x="231" y="25" width="227" height="25"/>
+                    <rect key="frame" x="231" y="49" width="227" height="25"/>
                     <constraints>
                         <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="220" id="VqZ-W3-2hi"/>
                     </constraints>
@@ -438,7 +438,7 @@
                     </connections>
                 </popUpButton>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="XJb-x1-5LL">
-                    <rect key="frame" x="56" y="32" width="172" height="16"/>
+                    <rect key="frame" x="56" y="56" width="172" height="16"/>
                     <constraints>
                         <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="168" id="YVG-Jz-3os"/>
                     </constraints>
@@ -448,35 +448,66 @@
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField hidden="YES" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="rUe-Ix-oaI">
-                    <rect key="frame" x="56" y="8" width="172" height="16"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Force Touch to:" id="dpH-PO-WKt">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="rUe-Ix-oaI">
+                    <rect key="frame" x="56" y="32" width="172" height="16"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Force Touch stage 1 speed:" id="fT1-Lb-001">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <popUpButton enabled="NO" hidden="YES" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="V5B-tS-TPW">
-                    <rect key="frame" x="231" y="1" width="227" height="25"/>
-                    <popUpButtonCell key="cell" type="push" title="Hide OSC" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="3" imageScaling="proportionallyDown" inset="2" selectedItem="M6K-ME-cve" id="Q6M-Qd-bxY">
+                <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="V5B-tS-TPW">
+                    <rect key="frame" x="231" y="25" width="227" height="25"/>
+                    <popUpButtonCell key="cell" type="push" title="2x" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="fT1-I4-001" id="fT1-Pc-001">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
-                        <menu key="menu" id="Viy-vg-Zdf">
+                        <menu key="menu" id="fT1-Mn-001">
                             <items>
-                                <menuItem title="Hide OSC" state="on" tag="3" id="M6K-ME-cve">
-                                    <modifierMask key="keyEquivalentModifierMask"/>
-                                </menuItem>
-                                <menuItem title="Pause/Resume" tag="2" id="Ba4-eT-rTv"/>
-                                <menuItem title="Enter/Exit full screen" tag="1" id="hDh-Lk-FJe">
-                                    <modifierMask key="keyEquivalentModifierMask"/>
-                                </menuItem>
-                                <menuItem title="None" id="jnR-2I-4x4"/>
+                                <menuItem title="2x" state="on" tag="4" id="fT1-I4-001"/>
+                                <menuItem title="2.5x" tag="5" id="fT1-I5-001"/>
+                                <menuItem title="3x" tag="6" id="fT1-I6-001"/>
+                                <menuItem title="3.5x" tag="7" id="fT1-I7-001"/>
+                                <menuItem title="4x" tag="8" id="fT1-I8-001"/>
+                                <menuItem title="4.5x" tag="9" id="fT1-I9-001"/>
+                                <menuItem title="5x" tag="10" id="fT1-IA-001"/>
                             </items>
                         </menu>
                     </popUpButtonCell>
+                    <connections>
+                        <binding destination="Yrj-d0-KaY" name="selectedTag" keyPath="values.forceTouchFirstStageSpeed" id="fT1-Bd-001"/>
+                    </connections>
+                </popUpButton>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="fT2-Tx-001">
+                    <rect key="frame" x="56" y="8" width="172" height="16"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Force Touch stage 2 speed:" id="fT2-Lb-001">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="fT2-Pp-001">
+                    <rect key="frame" x="231" y="1" width="227" height="25"/>
+                    <popUpButtonCell key="cell" type="push" title="3x" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="fT2-I6-001" id="fT2-Pc-001">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" id="fT2-Mn-001">
+                            <items>
+                                <menuItem title="3x" state="on" tag="6" id="fT2-I6-001"/>
+                                <menuItem title="3.5x" tag="7" id="fT2-I7-001"/>
+                                <menuItem title="4x" tag="8" id="fT2-I8-001"/>
+                                <menuItem title="4.5x" tag="9" id="fT2-I9-001"/>
+                                <menuItem title="5x" tag="10" id="fT2-IA-001"/>
+                                <menuItem title="5.5x" tag="11" id="fT2-IB-001"/>
+                                <menuItem title="6x" tag="12" id="fT2-IC-001"/>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                    <connections>
+                        <binding destination="Yrj-d0-KaY" name="selectedTag" keyPath="values.forceTouchSecondStageSpeed" id="fT2-Bd-001"/>
+                    </connections>
                 </popUpButton>
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="csk-yk-vkf" userLabel="Trackpad Image Container View">
-                    <rect key="frame" x="0.0" y="13" width="38" height="43"/>
+                    <rect key="frame" x="0.0" y="37" width="38" height="43"/>
                     <subviews>
                         <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="MJc-ye-l1u" userLabel="Trackpad Image View">
                             <rect key="frame" x="3" y="0.0" width="32" height="43"/>
@@ -509,7 +540,7 @@
                 <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="V5B-tS-TPW" secondAttribute="trailing" id="131-ep-FtB"/>
                 <constraint firstItem="XJb-x1-5LL" firstAttribute="leading" secondItem="csk-yk-vkf" secondAttribute="trailing" constant="20" id="5LP-4K-TMH"/>
                 <constraint firstItem="rUe-Ix-oaI" firstAttribute="width" secondItem="XJb-x1-5LL" secondAttribute="width" id="5st-tG-etU"/>
-                <constraint firstAttribute="bottom" secondItem="rUe-Ix-oaI" secondAttribute="bottom" constant="8" id="Klg-GA-yEf"/>
+                <constraint firstAttribute="bottom" secondItem="fT2-Tx-001" secondAttribute="bottom" constant="8" id="Klg-GA-yEf"/>
                 <constraint firstItem="V5B-tS-TPW" firstAttribute="leading" secondItem="rUe-Ix-oaI" secondAttribute="trailing" constant="8" id="LRc-cA-bIi"/>
                 <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="nio-Fb-YPK" secondAttribute="trailing" id="LXq-iR-Ktt"/>
                 <constraint firstItem="V5B-tS-TPW" firstAttribute="baseline" secondItem="rUe-Ix-oaI" secondAttribute="baseline" id="PX2-TW-FKh"/>
@@ -520,6 +551,13 @@
                 <constraint firstItem="rUe-Ix-oaI" firstAttribute="top" secondItem="XJb-x1-5LL" secondAttribute="bottom" constant="8" id="dpb-nT-cnU"/>
                 <constraint firstItem="V5B-tS-TPW" firstAttribute="width" secondItem="nio-Fb-YPK" secondAttribute="width" id="kBT-CW-4tO"/>
                 <constraint firstItem="csk-yk-vkf" firstAttribute="top" secondItem="VSf-E0-Btw" secondAttribute="top" id="xhA-QX-5nr"/>
+                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="fT2-Pp-001" secondAttribute="trailing" id="fT2-C1-001"/>
+                <constraint firstItem="fT2-Tx-001" firstAttribute="width" secondItem="XJb-x1-5LL" secondAttribute="width" id="fT2-C2-001"/>
+                <constraint firstItem="fT2-Pp-001" firstAttribute="leading" secondItem="fT2-Tx-001" secondAttribute="trailing" constant="8" id="fT2-C3-001"/>
+                <constraint firstItem="fT2-Pp-001" firstAttribute="baseline" secondItem="fT2-Tx-001" secondAttribute="baseline" id="fT2-C4-001"/>
+                <constraint firstItem="fT2-Tx-001" firstAttribute="leading" secondItem="rUe-Ix-oaI" secondAttribute="leading" id="fT2-C5-001"/>
+                <constraint firstItem="fT2-Tx-001" firstAttribute="top" secondItem="rUe-Ix-oaI" secondAttribute="bottom" constant="8" id="fT2-C6-001"/>
+                <constraint firstItem="fT2-Pp-001" firstAttribute="width" secondItem="nio-Fb-YPK" secondAttribute="width" id="fT2-C7-001"/>
             </constraints>
             <point key="canvasLocation" x="-334" y="307"/>
         </customView>
