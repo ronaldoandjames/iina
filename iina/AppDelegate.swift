@@ -1078,7 +1078,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   private func registerUserDefaultValues() {
-    UserDefaults.standard.register(defaults: [String: Any](uniqueKeysWithValues: Preference.defaultPreference.map { ($0.0.rawValue, $0.1) }))
+    let userDefaults = UserDefaults.standard
+    let defaults = [String: Any](uniqueKeysWithValues: Preference.defaultPreference.map { ($0.0.rawValue, $0.1) })
+    let forceTouchSpeedKeys: [Preference.Key] = [.forceTouchFirstStageSpeed, .forceTouchSecondStageSpeed]
+    let persistentDefaults = Bundle.main.bundleIdentifier
+      .flatMap { userDefaults.persistentDomain(forName: $0) } ?? [:]
+    let missingForceTouchSpeedKeys = forceTouchSpeedKeys.filter {
+      persistentDefaults[$0.rawValue] == nil
+    }
+
+    userDefaults.register(defaults: defaults)
+    for key in missingForceTouchSpeedKeys {
+      userDefaults.set(defaults[key.rawValue], forKey: key.rawValue)
+    }
   }
 
   // MARK: - FFmpeg version parsing

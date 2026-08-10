@@ -32,7 +32,32 @@ fileprivate extension NSStackView.VisibilityPriority {
 // The minimum distance that the user must drag before their click or tap gesture is interpreted as a drag gesture:
 fileprivate let minimumInitialDragDistance: CGFloat = 3.0
 
+fileprivate let pinchUnifiedScaleRange: ClosedRange<CGFloat> = 0.25...5.0
+fileprivate let pinchVideoZoomRange = log2(0.25)...log2(5.0)
+
 fileprivate let layoutSides: [NSLayoutConstraint.Attribute] = [.top, .bottom, .leading, .trailing]
+
+private final class PinchZoomOverlayView: TranslucentView {
+  let textField: NSTextField
+
+  init() {
+    textField = NSTextField(labelWithString: "")
+    textField.translatesAutoresizingMaskIntoConstraints = false
+    textField.font = .monospacedDigitSystemFont(ofSize: 16, weight: .semibold)
+    textField.alignment = .center
+
+    let container = NSView()
+    container.addSubview(textField)
+    textField.padding(.all)
+
+    super.init(liquidGlassCornerRadius: 14, vevCornerRadius: 8, padding: (10, 6))
+    setContent(container)
+  }
+
+  @MainActor required init?(coder: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
+}
 
 class MainWindowController: PlayerWindowController {
 
@@ -66,6 +91,7 @@ class MainWindowController: PlayerWindowController {
   /** For auto hiding UI after a timeout. */
   var hideControlTimer: Timer?
   var hideOSDTimer: Timer?
+  private var hidePinchZoomTimer: Timer?
 
   /** For blacking out other screens. */
   var screens: [NSScreen] = []
@@ -87,6 +113,7 @@ class MainWindowController: PlayerWindowController {
   var additionalInfoView: AdditionalInfoView!
   var bufferIndicatorView: BufferIndicatorView!
   var timePreviewView: TimePreviewView!
+  private var pinchZoomOverlayView: PinchZoomOverlayView!
   var titlebarOnTopButton: NSButton!
   var thumbnailPeekView: ThumbnailPeekView!
 
@@ -126,8 +153,10 @@ class MainWindowController: PlayerWindowController {
   var isPausedDueToMiniaturization: Bool = false
   var isPausedPriorToInteractiveMode: Bool = false
 
-  var lastMagnification: CGFloat = 0.0
-  var frameWhenStartedPinching = NSRect()
+  private var pinchStartUnifiedScale: CGFloat = 1
+  private var pinchScreenAnchor = NSPoint()
+  private var pinchWindowAnchorUnit = NSPoint(x: 0.5, y: 0.5)
+  private var pinchWindowGeometry: PinchWindowGeometry?
 
   /** Views that will show/hide when cursor moving in/out the window. */
   let fadeableViews = FadeableViewController()
@@ -171,6 +200,19 @@ class MainWindowController: PlayerWindowController {
   var aspectRatioConstraintForInteractiveMode: NSLayoutConstraint?
 
   // MARK: - Enums
+
+  private struct PinchWindowGeometry {
+    let screenFrame: NSRect
+    let chromeSize: NSSize
+    let maximumVideoSize: NSSize
+
+    var maximumWindowSize: NSSize {
+      NSSize(
+        width: maximumVideoSize.width + chromeSize.width,
+        height: maximumVideoSize.height + chromeSize.height
+      )
+    }
+  }
 
   // Window state
 
@@ -495,6 +537,8 @@ class MainWindowController: PlayerWindowController {
     cv.addSubview(osdView)
     additionalInfoView = AdditionalInfoView(mainWindow: self)
     cv.addSubview(additionalInfoView)
+    pinchZoomOverlayView = PinchZoomOverlayView()
+    cv.addSubview(pinchZoomOverlayView)
     bufferIndicatorView = BufferIndicatorView(mainWindow: self)
     cv.addSubview(bufferIndicatorView)
     titleBarView = Titlebar(mainWindow: self)
@@ -527,12 +571,19 @@ class MainWindowController: PlayerWindowController {
       .spacing(.trailing(8), to: sidebars.trailingSidebar.view)
     additionalInfoView.isHidden = true
 
+    // pinch zoom ratio
+
+    pinchZoomOverlayView.padding(.leading(greaterThan: 8), .bottom(greaterThan: 8))
+      .spacing(.top(8), to: titleBarView)
+      .spacing(.trailing(8), to: sidebars.trailingSidebar.view)
+    pinchZoomOverlayView.isHidden = true
+
     // buffer indicator view
 
     bufferIndicatorView.center()
     bufferIndicatorView.update()
 
-    [timePreviewView, osdView, additionalInfoView, bufferIndicatorView].forEach {
+    [timePreviewView, osdView, additionalInfoView, pinchZoomOverlayView, bufferIndicatorView].forEach {
       $0?.setStyle(Preference.liquidGlass(.osd) ? .liquidGlass : .visualEffect)
     }
 
@@ -1329,7 +1380,7 @@ class MainWindowController: PlayerWindowController {
 
   @objc func handleMagnifyGesture(recognizer: NSMagnificationGestureRecognizer) {
     guard pinchAction != .none else { return }
-    guard !interactiveMode.isActive, let window = window, let screenFrame = NSScreen.main?.visibleFrame else { return }
+    guard !interactiveMode.isActive, let window else { return }
 
     switch pinchAction {
     case .none:
@@ -1344,31 +1395,234 @@ class MainWindowController: PlayerWindowController {
         }
       }
     case .windowSize:
-      if fsState.isFullscreen { return }
+      handleWindowSizeMagnifyGesture(recognizer, window: window)
+    }
+  }
 
-      // adjust window size
-      if recognizer.state == .began {
-        // began
-        lastMagnification = recognizer.magnification
-        videoView.videoLayer.inLiveResize = true
-        frameWhenStartedPinching = window.frame
-      } else if recognizer.state == .changed {
-        // changed
-        let offset = recognizer.magnification - lastMagnification + 1.0;
-        let newWidth = window.frame.width * offset
-        let newHeight = newWidth / frameWhenStartedPinching.size.aspect
-
-        //Check against max & min threshold
-        if newHeight < screenFrame.height && newHeight > AppData.mainWindowMinSize.height && newWidth > AppData.mainWindowMinSize.width {
-          let newSize = NSSize(width: newWidth, height: newHeight);
-          window.setFrame(frameWhenStartedPinching.centeredResize(to: newSize), display: true)
-        }
-
-        lastMagnification = recognizer.magnification
-      } else if recognizer.state == .ended {
-        updateWindowParametersForMPV()
-        videoView.videoLayer.inLiveResize = false
+  private func handleWindowSizeMagnifyGesture(_ recognizer: NSMagnificationGestureRecognizer, window: NSWindow) {
+    switch recognizer.state {
+    case .began:
+      guard let geometry = makePinchWindowGeometry(window: window) else { return }
+      pinchWindowGeometry = geometry
+      pinchStartUnifiedScale = currentPinchUnifiedScale(window: window, geometry: geometry)
+      if fsState.isFullscreen {
+        applyPinchVideoScale(pinchStartUnifiedScale, focalPoint: pinchFocalPoint(recognizer))
       }
+
+      let anchorInWindow = recognizer.location(in: nil)
+      pinchScreenAnchor = window.convertPoint(toScreen: anchorInWindow)
+      pinchWindowAnchorUnit = NSPoint(
+        x: ((pinchScreenAnchor.x - window.frame.minX) / window.frame.width).clamped(to: 0...1),
+        y: ((pinchScreenAnchor.y - window.frame.minY) / window.frame.height).clamped(to: 0...1)
+      )
+
+      if !fsState.isFullscreen {
+        videoView.videoLayer.inLiveResize = true
+      }
+      showPinchZoomRatio(pinchStartUnifiedScale)
+
+    case .changed:
+      guard let geometry = pinchWindowGeometry else { return }
+      let gestureScale = max(1 + recognizer.magnification, 0.01)
+      let allowedScaleRange: ClosedRange<CGFloat> = fsState.isFullscreen ? 1...5 : pinchUnifiedScaleRange
+      let targetScale = (pinchStartUnifiedScale * gestureScale).clamped(to: allowedScaleRange)
+      let appliedScale = applyPinchUnifiedScale(
+        targetScale,
+        recognizer: recognizer,
+        window: window,
+        geometry: geometry
+      )
+      showPinchZoomRatio(appliedScale)
+
+    case .ended, .cancelled, .failed:
+      finishPinchMagnification(window: window)
+
+    default:
+      break
+    }
+  }
+
+  private func makePinchWindowGeometry(window: NSWindow) -> PinchWindowGeometry? {
+    guard let screenFrame = (window.screen ?? NSScreen.main)?.visibleFrame else { return nil }
+    let videoViewSize = videoView.bounds.size
+    let chromeSize = NSSize(
+      width: max(window.frame.width - videoViewSize.width, 0),
+      height: max(window.frame.height - videoViewSize.height, 0)
+    )
+    let availableVideoSize = NSSize(
+      width: max(screenFrame.width - chromeSize.width, 1),
+      height: max(screenFrame.height - chromeSize.height, 1)
+    )
+    let (videoWidth, videoHeight) = player.videoSizeForDisplay
+    let maximumVideoSize = NSSize(
+      width: CGFloat(videoWidth),
+      height: CGFloat(videoHeight)
+    ).shrink(toSize: availableVideoSize)
+    return PinchWindowGeometry(
+      screenFrame: screenFrame,
+      chromeSize: chromeSize,
+      maximumVideoSize: maximumVideoSize
+    )
+  }
+
+  private func currentPinchUnifiedScale(window: NSWindow, geometry: PinchWindowGeometry) -> CGFloat {
+    let videoZoomScale = CGFloat(pow(2, player.mpv.getDouble(MPVOption.Video.videoZoom)))
+    guard !fsState.isFullscreen else {
+      return videoZoomScale.clamped(to: 1...pinchUnifiedScaleRange.upperBound)
+    }
+
+    let videoViewSize = videoView.bounds.size
+    let windowScale = min(
+      videoViewSize.width / geometry.maximumVideoSize.width,
+      videoViewSize.height / geometry.maximumVideoSize.height
+    ).clamped(to: 0...1)
+    return (windowScale * videoZoomScale).clamped(to: pinchUnifiedScaleRange)
+  }
+
+  private func applyPinchUnifiedScale(
+    _ scale: CGFloat,
+    recognizer: NSMagnificationGestureRecognizer,
+    window: NSWindow,
+    geometry: PinchWindowGeometry
+  ) -> CGFloat {
+    if fsState.isFullscreen {
+      applyPinchVideoScale(scale, focalPoint: pinchFocalPoint(recognizer))
+      return scale
+    }
+
+    if scale <= 1 {
+      resetPinchVideoTransform()
+
+      let minimumVideoScale = max(max(
+        (AppData.mainWindowMinSize.width - geometry.chromeSize.width) / geometry.maximumVideoSize.width,
+        (AppData.mainWindowMinSize.height - geometry.chromeSize.height) / geometry.maximumVideoSize.height
+      ), pinchUnifiedScaleRange.lowerBound)
+      let appliedScale = scale.clamped(to: minimumVideoScale...1)
+      let newSize = NSSize(
+        width: geometry.maximumVideoSize.width * appliedScale + geometry.chromeSize.width,
+        height: geometry.maximumVideoSize.height * appliedScale + geometry.chromeSize.height
+      )
+      window.setFrame(pinchWindowFrame(size: newSize, geometry: geometry), display: true)
+      return appliedScale
+    }
+
+    let maximumWindowFrame = pinchWindowFrame(size: geometry.maximumWindowSize, geometry: geometry)
+    if window.frame.size != maximumWindowFrame.size || window.frame.origin != maximumWindowFrame.origin {
+      window.setFrame(maximumWindowFrame, display: true)
+      window.contentView?.layoutSubtreeIfNeeded()
+    }
+    applyPinchVideoScale(scale, focalPoint: pinchFocalPoint(recognizer))
+    return scale
+  }
+
+  private func pinchWindowFrame(size: NSSize, geometry: PinchWindowGeometry) -> NSRect {
+    NSRect(
+      x: pinchScreenAnchor.x - size.width * pinchWindowAnchorUnit.x,
+      y: pinchScreenAnchor.y - size.height * pinchWindowAnchorUnit.y,
+      width: size.width,
+      height: size.height
+    ).constrain(in: geometry.screenFrame)
+  }
+
+  private func pinchFocalPoint(_ recognizer: NSMagnificationGestureRecognizer) -> NSPoint {
+    let bounds = videoView.bounds
+    let location = recognizer.location(in: videoView)
+    return NSPoint(
+      x: location.x.clamped(to: bounds.minX...bounds.maxX),
+      y: (bounds.height - location.y).clamped(to: bounds.minY...bounds.maxY)
+    )
+  }
+
+  private func applyPinchVideoScale(_ scale: CGFloat, focalPoint: NSPoint) {
+    guard player.info.state.active else { return }
+    if scale <= 1 {
+      resetPinchVideoTransform()
+      return
+    }
+
+    let viewSize = videoView.bounds.size
+    let (videoWidth, videoHeight) = player.videoSizeForDisplay
+    let baseVideoSize = NSSize(
+      width: CGFloat(videoWidth),
+      height: CGFloat(videoHeight)
+    ).shrink(toSize: viewSize)
+    guard baseVideoSize.width > 0, baseVideoSize.height > 0 else { return }
+
+    let currentZoom = player.mpv.getDouble(MPVOption.Video.videoZoom)
+    let newZoom = log2(Double(scale)).clamped(to: pinchVideoZoomRange)
+    guard newZoom != currentZoom else { return }
+
+    let currentScale = CGFloat(pow(2, currentZoom))
+    let newScale = CGFloat(pow(2, newZoom))
+    let currentVideoSize = NSSize(
+      width: baseVideoSize.width * currentScale,
+      height: baseVideoSize.height * currentScale
+    )
+    let newVideoSize = NSSize(
+      width: baseVideoSize.width * newScale,
+      height: baseVideoSize.height * newScale
+    )
+    let currentPanX = player.mpv.getDouble(MPVOption.Video.videoPanX)
+    let currentPanY = player.mpv.getDouble(MPVOption.Video.videoPanY)
+    let currentOrigin = NSPoint(
+      x: (viewSize.width - currentVideoSize.width) / 2 + currentPanX * currentVideoSize.width,
+      y: (viewSize.height - currentVideoSize.height) / 2 + currentPanY * currentVideoSize.height
+    )
+    let contentPoint = NSPoint(
+      x: (focalPoint.x - currentOrigin.x) / currentVideoSize.width,
+      y: (focalPoint.y - currentOrigin.y) / currentVideoSize.height
+    )
+    let newPanX = (focalPoint.x - contentPoint.x * newVideoSize.width -
+      (viewSize.width - newVideoSize.width) / 2) / newVideoSize.width
+    let newPanY = (focalPoint.y - contentPoint.y * newVideoSize.height -
+      (viewSize.height - newVideoSize.height) / 2) / newVideoSize.height
+
+    player.mpv.setDouble(MPVOption.Video.videoZoom, newZoom, level: .verbose)
+    player.mpv.setDouble(MPVOption.Video.videoPanX, newPanX, level: .verbose)
+    player.mpv.setDouble(MPVOption.Video.videoPanY, newPanY, level: .verbose)
+  }
+
+  private func resetPinchVideoTransform() {
+    if player.mpv.getDouble(MPVOption.Video.videoZoom) != 0 {
+      player.mpv.setDouble(MPVOption.Video.videoZoom, 0, level: .verbose)
+    }
+    if player.mpv.getDouble(MPVOption.Video.videoPanX) != 0 {
+      player.mpv.setDouble(MPVOption.Video.videoPanX, 0, level: .verbose)
+    }
+    if player.mpv.getDouble(MPVOption.Video.videoPanY) != 0 {
+      player.mpv.setDouble(MPVOption.Video.videoPanY, 0, level: .verbose)
+    }
+  }
+
+  private func resetPinchZoomForWindowModeChange() {
+    guard player.info.state.active else { return }
+    resetPinchVideoTransform()
+    videoView.videoLayer.inLiveResize = false
+    pinchWindowGeometry = nil
+    hidePinchZoomTimer?.invalidate()
+    hidePinchZoomTimer = nil
+    pinchZoomOverlayView.isHidden = true
+  }
+
+  private func showPinchZoomRatio(_ scale: CGFloat) {
+    hidePinchZoomTimer?.invalidate()
+    hidePinchZoomTimer = nil
+    pinchZoomOverlayView.textField.stringValue = "\(Int((scale * 100).rounded()))%"
+    pinchZoomOverlayView.alphaValue = 1
+    pinchZoomOverlayView.isHidden = false
+  }
+
+  private func finishPinchMagnification(window: NSWindow) {
+    if !fsState.isFullscreen {
+      updateWindowParametersForMPV()
+    }
+    videoView.videoLayer.inLiveResize = false
+    pinchWindowGeometry = nil
+
+    hidePinchZoomTimer?.invalidate()
+    hidePinchZoomTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: false) { [weak self] _ in
+      self?.pinchZoomOverlayView.isHidden = true
+      self?.hidePinchZoomTimer = nil
     }
   }
 
@@ -1558,6 +1812,7 @@ class MainWindowController: PlayerWindowController {
 
     videoView.needsLayout = true
     videoView.layoutSubtreeIfNeeded()
+    resetPinchZoomForWindowModeChange()
     forceDraw("entered full screen mode")
 
     if Preference.bool(for: .blackOutMonitor) {
@@ -1723,6 +1978,7 @@ class MainWindowController: PlayerWindowController {
 
     videoView.needsLayout = true
     videoView.layoutSubtreeIfNeeded()
+    resetPinchZoomForWindowModeChange()
     forceDraw("exited full screen mode")
 
     if Preference.bool(for: .pauseWhenLeavingFullScreen) && player.info.state == .playing {

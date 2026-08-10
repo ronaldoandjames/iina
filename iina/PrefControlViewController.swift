@@ -31,11 +31,22 @@ class PrefControlViewController: PreferenceViewController, PreferenceWindowEmbed
   @IBOutlet var sectionMouseView: NSView!
 
   @IBOutlet weak var forceTouchLabel: NSTextField!
+  @IBOutlet weak var forceTouchSecondStageLabel: NSTextField!
   @IBOutlet weak var scrollVerticallyLabel: NSTextField!
 
   override func viewDidLoad() {
     super.viewDidLoad()
 
+    forceTouchLabel.stringValue = NSLocalizedString(
+      "settings.forceTouchFirstStageSpeed.label",
+      value: "Force Touch stage 1 speed",
+      comment: "Force Touch stage 1 speed"
+    )
+    forceTouchSecondStageLabel.stringValue = NSLocalizedString(
+      "settings.forceTouchSecondStageSpeed.label",
+      value: "Force Touch stage 2 speed",
+      comment: "Force Touch stage 2 speed"
+    )
     forceTouchLabel.widthAnchor.constraint(equalTo: scrollVerticallyLabel.widthAnchor, multiplier: 1).isActive = true
   }
 
